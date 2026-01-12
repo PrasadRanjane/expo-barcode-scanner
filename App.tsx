@@ -9,7 +9,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { BarCodeScannerView, useCameraPermissions } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { ScannedDataCard } from './components/ScannedDataCard';
@@ -100,7 +100,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <BarCodeScannerView
+      <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8', 'upc'],
