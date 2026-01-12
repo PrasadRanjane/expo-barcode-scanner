@@ -9,52 +9,49 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { BarCodeScannerView, useCameraPermissions } from 'expo-barcode-scanner';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { ScannedDataCard } from './components/ScannedDataCard';
 import { Colors } from './constants/Colors';
 
 export default function App() {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [scanning, setScanning] = useState(true);
   const [scannedData, setScannedData] = useState<string>('');
   const [scannedType, setScannedType] = useState<string>('');
 
   useEffect(() => {
-    requestCameraPermission();
-  }, []);
+    if (permission === null) {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
 
-  const requestCameraPermission = async () => {
-    try {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Camera permission is required to scan QR codes and barcodes.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Open Settings',
-              onPress: () => {
-                if (Platform.OS === 'ios') {
-                  Linking.openURL('app-settings:');
-                } else {
-                  Linking.openSettings();
-                }
-              },
+  const handleRequestPermission = async () => {
+    const result = await requestPermission();
+    if (!result.granted) {
+      Alert.alert(
+        'Permission Required',
+        'Camera permission is required to scan QR codes and barcodes.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Open Settings',
+            onPress: () => {
+              if (Platform.OS === 'ios') {
+                Linking.openURL('app-settings:');
+              } else {
+                Linking.openSettings();
+              }
             },
-          ]
-        );
-      }
-    } catch (error) {
-      setHasPermission(false);
+          },
+        ]
+      );
     }
   };
 
-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  const handleBarCodeScanned = ({ data, type }: { data: string; type: string }) => {
     if (!scanned) {
       setScanned(true);
       setScanning(false);
@@ -75,7 +72,7 @@ export default function App() {
     setScannedType('');
   };
 
-  if (hasPermission === null) {
+  if (permission === null) {
     return (
       <View style={styles.loadingContainer}>
         <MaterialIcons name="camera-alt" size={64} color={Colors.primary} />
@@ -84,7 +81,7 @@ export default function App() {
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <View style={styles.permissionContainer}>
         <MaterialIcons name="camera-enhance" size={80} color={Colors.error} />
@@ -92,7 +89,7 @@ export default function App() {
         <Text style={styles.permissionText}>
           Please enable camera permissions in your device settings to use the scanner.
         </Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestCameraPermission}>
+        <TouchableOpacity style={styles.permissionButton} onPress={handleRequestPermission}>
           <MaterialIcons name="refresh" size={20} color={Colors.text} />
           <Text style={styles.permissionButtonText}>Try Again</Text>
         </TouchableOpacity>
@@ -103,17 +100,12 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <BarCodeScanner
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      <BarCodeScannerView
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8', 'upc'],
+        }}
         style={StyleSheet.absoluteFillObject}
-        barCodeTypes={[
-          BarCodeScanner.Constants.BarCodeType.qr,
-          BarCodeScanner.Constants.BarCodeType.code128,
-          BarCodeScanner.Constants.BarCodeType.code39,
-          BarCodeScanner.Constants.BarCodeType.ean13,
-          BarCodeScanner.Constants.BarCodeType.ean8,
-          BarCodeScanner.Constants.BarCodeType.upc,
-        ]}
       />
       <ScannerOverlay scanning={scanning && !scanned} />
       <View style={styles.header}>

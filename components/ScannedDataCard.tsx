@@ -40,7 +40,7 @@ export const ScannedDataCard: React.FC<ScannedDataCardProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [slideAnim, fadeAnim]);
 
   const getTypeIcon = (codeType: string) => {
     if (codeType.includes('qr')) return 'qr-code-scanner';
