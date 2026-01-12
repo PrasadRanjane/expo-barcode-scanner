@@ -17,24 +17,23 @@ A professional, feature-rich barcode and QR code scanner component for React Nat
 
 1. Copy all files to your Snack
 2. Dependencies will be automatically installed:
-   - `expo-barcode-scanner`
+   - `expo-camera` (barcode scanning functionality)
    - `@expo/vector-icons`
 3. Run!
 
 ## Usage
 
 ```tsx
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
-const [hasPermission, setHasPermission] = useState(null);
+const [permission, requestPermission] = useCameraPermissions();
 const [scanned, setScanned] = useState(false);
 
 useEffect(() => {
-  (async () => {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === 'granted');
-  })();
-}, []);
+  if (permission === null) {
+    requestPermission();
+  }
+}, [permission, requestPermission]);
 
 const handleBarCodeScanned = ({ type, data }) => {
   setScanned(true);
@@ -42,8 +41,11 @@ const handleBarCodeScanned = ({ type, data }) => {
 };
 
 return (
-  <BarCodeScanner
-    onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+  <CameraView
+    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+    barcodeScannerSettings={{
+      barcodeTypes: ['qr', 'code128', 'code39'],
+    }}
     style={StyleSheet.absoluteFillObject}
   />
 );
